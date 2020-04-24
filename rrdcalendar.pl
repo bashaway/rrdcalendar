@@ -63,7 +63,6 @@ foreach $line (split(/\n/,$graph_opt)) {
     $rrds{'index_to_func'}{$1} = $4;
     $rrds_funcs{$4} = 1;
     $rrds_types{$3} = 1;
-    $rrds_indexs{$1} = 1;
 
     #print "$1 $2 $3 $4 \n";
 
@@ -146,7 +145,7 @@ foreach $line (split(/\n/,$graph_opt)) {
 %operator = ( '+' => \&plus, '-' => \&minus, '*' => \&multiply, '/' => \&division,);
 
 $max_final = 0;
-foreach $index ( keys    $cdefs{"index"} ){
+foreach $index ( keys  ( %{$cdefs{"index"}} )){
     #print "$index : ".$cdefs{"formula"}{$index} ."\n";
     $formula = "";
     foreach(split(/,/,$cdefs{"formula"}{$index})){
