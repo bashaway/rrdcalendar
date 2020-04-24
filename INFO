@@ -5,4 +5,4 @@ longname = Graph view at calendar
 author = bashaway
 email = haruca_tech@gmail.com
 homepage = http://www.prosper2.org/devwiki/index.php?haruca
-compat = 1.2.11
+compat = 1.2.0
