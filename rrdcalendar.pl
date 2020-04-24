@@ -9,6 +9,7 @@ $date = $ARGV[1];
 $graph_opt = $ARGV[2];
 $graph_opt =~ s/&#039;/'/g;
 
+#print $graph_opt."\n";
 
 # ---------------------------------------------------------------- #
 # Time Span Calc
@@ -186,7 +187,7 @@ foreach (split(/\n/,$graph_opt)) {
     $title =~ s/ //g;
   } 
 
-  if($_ =~ /^--start=|^--end=|^--width=|^--base=|^--height=|^--title=|^--watermark |^--color |^--font |^--x-grid /){next;}
+  if($_ =~ /^--start=|^--end=|^--width=|^--height=|^--title=|^--watermark |^--color |^--font |^--x-grid /){next;}
 
 
   if($_ =~ /^--/){
@@ -229,23 +230,24 @@ foreach (split(/\n/,$graph_opt)) {
 # --lower-limit='0' \
 
 
-
-
-$bgfile = "/usr/share/cacti/plugins/rrdcalendar/images/bg.png";
-
-
 foreach $week (0 .. $weeks){
 
-  $width = $end{$week} - $start{$week} +1 ;
-  $width = $width /600;
-  #print $width."\n";
+  $time = $end{$week} - $start{$week} +1 ;
+
+  $timespan = 600;
+
+  $width_week = 7*24*60*60 / $timespan;
+  $width_day  = 1*24*60*60 / $timespan;
+  $width = $time / $timespan;
+
+  $height= $width_day;
+
 
   $cmd  = $cmd_rrdtool . ' graph - '." \\\n";;
   $cmd .= '--start='.$start{$week}." \\\n";
   $cmd .= '--end='.$end{$week}." \\\n";
   $cmd .= '--width='.$width." \\\n";
-  $cmd .= '--base=1000 '." \\\n";
-  $cmd .= '--height=120 '." \\\n";
+  $cmd .= '--height='.$height ." \\\n";
 
   $cmd .= '--color MGRID#000000 '."\\\n";
   $cmd .= '--color BACK#FFFFFF '."\\\n";
@@ -276,8 +278,7 @@ foreach $week (0 .. $weeks){
   #print $cmd . "\n\n\n\n\n\n\n\n";
 
   if($week == 0){
-    $offset = 1008-$width ; 
-    $tmpcmd = "$cmd_convert $bgfile $file -composite -roll +$offset+0 $file";
+    $tmpcmd = sprintf("%s -size %dx%d canvas:white %s -composite -roll +%d+0 %s ",$cmd_convert , $width_week+100,$width_day+40,$file , $width_week-$width,$file);
     $check = `$tmpcmd`;
   }
 
