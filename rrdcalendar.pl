@@ -179,7 +179,7 @@ $defs = "";
 
 $opts .= "--upper-limit=$max_final \\\n";
 foreach (split(/\n/,$graph_opt)) {
-  $_ =~ s/<\/PRE>..*/\\/g;
+  $_ =~ s/<\/PRE>.*/\\/g;
 
   if($_ =~ /^--title/){
     $title = (split(/=/,$_))[-1];
