@@ -78,7 +78,11 @@ function rrdcalendar_graph_buttons($args) {
 	$local_graph_id = $args[1]['local_graph_id'];
 
 	if (api_user_realm_auth("rrdcalendar.php")) {
-		echo "<a href='#' onclick=\"window.open('".$config['url_path']."plugins/rrdcalendar/rrdcalendar.php?local_graph_id=".$local_graph_id."', 'popup_".$local_graph_id."', 'toolbar=no,menubar=no,location=no,scrollbars=no,status=no,titlebar=no,width=800,height=800,resizable=yes')\"><img src='".$config['url_path']."plugins/rrdcalendar/rrdcalendar.gif' border='0' alt='rrdcalendar' title='calendar' style='padding: 3px;'></a><br/>";
+		echo "<a href='#' ";
+                echo "onclick=\"window.open('".$config['url_path']."plugins/rrdcalendar/rrdcalendar.php?local_graph_id=".$local_graph_id."', 'popup_".$local_graph_id;
+                echo "', 'toolbar=no,menubar=no,location=no,scrollbars=no,status=no,titlebar=no,width=800,height=1100,resizable=yes')\">";
+                echo "<img src='".$config['url_path']."plugins/rrdcalendar/rrdcalendar.gif' border='0' alt='rrdcalendar' title='calendar' style='padding: 3px;'>";
+                echo "</a><br/>";
 	}
 
 	rrdcalendar_setup_table();

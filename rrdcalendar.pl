@@ -1,34 +1,39 @@
 #!/usr/bin/perl
 
+$debug_print = 1;
+$debug_print = 0;
+
 $cmd_convert = "/usr/bin/convert ";
 $cmd_rrdtool = "/usr/bin/rrdtool ";
 $tmpdir = "/usr/share/cacti/plugins/rrdcalendar/images";
 
+%operator = ( '+' => \&plus, '-' => \&minus, '*' => \&multiply, '/' => \&division,);
+
 $local_graph_id = $ARGV[0];
-$date = $ARGV[1];
-$graph_opt = $ARGV[2];
-$graph_opt =~ s/&#039;/'/g;
-
-#print $graph_opt."\n";
-
-# ---------------------------------------------------------------- #
-# Time Span Calc
-# ---------------------------------------------------------------- #
-
-$year = substr($date,0,4);
-$mon  = substr($date,4,2);
+$yearmon = $ARGV[1];
 
 # monday start : $mon_start = 1;
 # sunday start : $mon_start = 0;
+$mon_start = $ARGV[2];
 
-$mon_start = 1;
+# $limits = sprintf("%s,%s,%s,%s", $upper_limit_type ,$upper_limit ,$lower_limit_type ,$lower_limit);
+$limits =  $ARGV[3];
 
-if($mon_start){
-  print " The week starts on Monday. \n";
-}else{
-  print " The week starts on Sunday. \n";
-}
+$graph_opt = $ARGV[4];
+$graph_opt =~ s/&#039;/'/g;
 
+
+
+if($debug_print){ print $graph_opt."\n"; }
+
+
+
+# ---------------------------------------------------------------- #
+# Timespan calculate
+# ---------------------------------------------------------------- #
+
+$year = substr($yearmon,0,4);
+$mon  = substr($yearmon,4,2);
 
 for($current_week=0,$day = 1;  ($unixtime,$wday) = check_date($year,$mon,$day) ;$day++){
   if($wday == $mon_start && $day != 1){
@@ -43,15 +48,22 @@ foreach $week ( sort ( keys(%times) ) ){
   $end{$week}   = ${$times{$week}}[-1] - 1 + 24*60*60;
 }
 
-foreach $week (0 .. $weeks){
-  #print $start{$week} ." - ". $end{$week} ."\n";
-}
-
-
-
-
 $start_all = $start{"0"};
 $end_all = $end{$weeks};
+
+
+
+
+
+# ---------------------------------------------------------------- #
+# Upper Limit / Lower Limit Calculate
+# ---------------------------------------------------------------- #
+
+my($upper_limit_type ,$upper_limit ,$lower_limit_type ,$lower_limit) = split(/,/,$limits);
+
+if($upper_limit_type eq "fixed" && $lower_limit_type eq "fixed"){
+}else{
+
 
 foreach $line (split(/\n/,$graph_opt)) {
   if($line =~ /^DEF:(\w+)='(.+?)':'(.+?)':(\w+)/){
@@ -75,12 +87,12 @@ foreach $line (split(/\n/,$graph_opt)) {
 # resolution =  1w = 7*24*60*60 = 86400
 # resolution = 24h =   24*60*60 = 86400
 # resolution =  1h =      60*60 =  3600
-$resolution = 1 * 24 * 60 * 60 ;
-$resolution = 600 ;
+$resolution = 3600 ;
 
 foreach $func ( keys %rrds_funcs ){
   foreach $type ( keys %rrds_types ){
     $maxs{$type}{$func} = 0;
+    $mins{$type}{$func} = 0;
   }
 }
 
@@ -98,6 +110,7 @@ foreach $func ( keys %rrds_funcs ){
       foreach $i (1 .. $#counters){
 
         if($maxs{$types[$i]}{$func} < $counters[$i] ){ $maxs{$types[$i]}{$func} = $counters[$i]; }
+        if($mins{$types[$i]}{$func} > $counters[$i] ){ $mins{$types[$i]}{$func} = $counters[$i]; }
         #print $types[$i] . " : " . $counters[$i] . "\n";
 
       }
@@ -108,7 +121,8 @@ foreach $func ( keys %rrds_funcs ){
 
 foreach $func ( keys %rrds_funcs ){
   foreach $type ( keys %rrds_types ){
-    #print "$type : $func : ".$maxs{$type}{$func}."\n";
+    #print "MAX : $type : $func : ".$maxs{$type}{$func}."\n";
+    #print "MIN : $type : $func : ".$mins{$type}{$func}."\n";
   }
 }
 
@@ -118,12 +132,11 @@ foreach $func ( keys %rrds_funcs ){
 # index to maximum 
 foreach $index ( keys %{$rrds{'index'}} ){
   $rrds{'max'}{$index} = $maxs{$rrds{'index_to_type'}{$index}}{$rrds{'index_to_func'}{$index}};
+  $rrds{'min'}{$index} = $mins{$rrds{'index_to_type'}{$index}}{$rrds{'index_to_func'}{$index}};
   #print "$index  : " . $rrds{'max'}{$index} . "\n";
 }
 
 
-# check immidiate value 
-#
 
 #print "-- AREA or LINE  -- \n";
 foreach (split(/\n/,$graph_opt)) {
@@ -143,9 +156,12 @@ foreach $line (split(/\n/,$graph_opt)) {
   }
 }
 
-%operator = ( '+' => \&plus, '-' => \&minus, '*' => \&multiply, '/' => \&division,);
 
-$max_final = 0;
+# ---------------------------------------------------------------- #
+# Upper Limit 
+# ---------------------------------------------------------------- #
+
+$upper_limit = 0;
 foreach $index ( keys  ( %{$cdefs{"index"}} )){
     #print "$index : ".$cdefs{"formula"}{$index} ."\n";
     $formula = "";
@@ -163,12 +179,44 @@ foreach $index ( keys  ( %{$cdefs{"index"}} )){
     };
     if( !$@ ){ 
       #print "$formula   = $result \n";
-      if($max_final < $result ){$max_final = $result; }
+      if($upper_limit < $result ){$upper_limit = $result; }
     }
     
 }
 
-#print "UPPER LIMIT : $max_final \n";
+
+# ---------------------------------------------------------------- #
+# Lower Limit 
+# ---------------------------------------------------------------- #
+
+$lower_limit = 0;
+foreach $index ( keys  ( %{$cdefs{"index"}} )){
+    #print "$index : ".$cdefs{"formula"}{$index} ."\n";
+    $formula = "";
+    foreach(split(/,/,$cdefs{"formula"}{$index})){
+      if($_ =~ /[a-zA-Z]+/){
+        $formula .= $rrds{'min'}{$_}.",";
+      }else{
+        $formula .= $_.",";
+      }
+    }
+    chop($formula);
+    @stack = ();
+    eval{
+      $result = calc_rpn($formula);
+    };
+    if( !$@ ){ 
+      #print "$formula   = $result \n";
+      if($lower_limit > $result ){$lower_limit = $result; }
+    }
+    
+}
+
+
+}
+
+
+
 
 # ---------------------------------------------------------------- #
 # Graph Option 
@@ -176,8 +224,16 @@ foreach $index ( keys  ( %{$cdefs{"index"}} )){
 
 $opts = "";
 $defs = "";
+$legends = "";
+$line = "";
 
-$opts .= "--upper-limit=$max_final \\\n";
+# $flg_fixed_limit : 0 : use maximum value of this month
+# $flg_fixed_limit : 1 : use ARGV value
+
+$opts .= "--upper-limit=$upper_limit \\\n";
+$opts .= "--lower-limit=$lower_limit \\\n";
+
+
 foreach (split(/\n/,$graph_opt)) {
   $_ =~ s/<\/PRE>.*/\\/g;
 
@@ -187,7 +243,7 @@ foreach (split(/\n/,$graph_opt)) {
     $title =~ s/ //g;
   } 
 
-  if($_ =~ /^--start=|^--end=|^--width=|^--height=|^--title=|^--watermark |^--color |^--font |^--x-grid /){next;}
+  if($_ =~ /^--start=|^--end=|^--width=|^--height=|^--title=|^--watermark |^--color |^--font |^--x-grid |^--alt-autoscale-max |^--upper-limit=|^--lower-limit=/){next;}
 
 
   if($_ =~ /^--/){
@@ -198,50 +254,26 @@ foreach (split(/\n/,$graph_opt)) {
     $line .= $_ . "\n";
     $_ =~ s/'.+'/''/g;
     $line_nostr .= $_ . "\n";
+  }elsif($_ =~ /^HRULE/){
+    $legends .= $_ . "\n";
   }
-
 
 }
 
 
-
-
-# LIMIT
-
-# CPU graph
-# --upper-limit='100' \
-# --lower-limit='0' \
-
-# RTT
-# --alt-autoscale-max \
-# --lower-limit='0' \
-
-# Interface Error 
-# --alt-autoscale-max \
-# --lower-limit='0' \
-
-# Interface Traffic
-# --alt-autoscale-max \
-# --lower-limit='0' \
-
-
-# Memory Usage
-# --alt-autoscale-max \
-# --lower-limit='0' \
-
-
 foreach $week (0 .. $weeks){
 
-  $time = $end{$week} - $start{$week} +1 ;
+  # Const vars
+  $axis_x_offset = 103;
+  $axis_y_offset = 44;
+  $legend_offset = 14;
+  $timespan = 1000;
 
-  $timespan = 600;
 
   $width_week = 7*24*60*60 / $timespan;
   $width_day  = 1*24*60*60 / $timespan;
-  $width = $time / $timespan;
-
+  $width = ( $end{$week} - $start{$week} +1 ) / $timespan;
   $height= $width_day;
-
 
   $cmd  = $cmd_rrdtool . ' graph - '." \\\n";;
   $cmd .= '--start='.$start{$week}." \\\n";
@@ -260,44 +292,55 @@ foreach $week (0 .. $weeks){
   $cmd .= '--font UNIT:8: '."\\\n";
   $cmd .= '--x-grid HOUR:6:DAY:1:DAY:1:86400:%m\/%d\(%a\) '."\\\n";
 
-  # Upper/Lower Limit standardization
-
 
   $cmd .= $opts;
   $cmd .= $defs;
   if($week == $weeks){
     $cmd .= $line;
+    $cmd .= $legends;
   }else{
     $cmd .= $line_nostr;
   }
 
-  $file = $tmpdir."/rrdcal_tmp-".$local_graph_id."-".$week.'.png';
-  $cmd .= " > $file ";
+  # generate temporary graph (single week)
+  $file = sprintf("%s/rrdcal_tmp-%d-%s.png",$tmpdir,$local_graph_id,$week);
   push(@files,$file);
-  $result = `$cmd`;
-  #print $cmd . "\n\n\n\n\n\n\n\n";
+  system("$cmd  > $file ");
+  if($debug_print){print $cmd . "\n\n\n\n\n\n\n\n";}
 
+  # first week : graph offset
   if($week == 0){
-    $tmpcmd = sprintf("%s -size %dx%d canvas:white %s -composite -roll +%d+0 %s ",$cmd_convert , $width_week+100,$width_day+40,$file , $width_week-$width,$file);
-    $check = `$tmpcmd`;
+    $tmpcmd = sprintf("%s -size %dx%d canvas:white %s -composite -roll +%d+0 %s ",$cmd_convert , $width_week+$axis_x_offset,$width_day+$axis_y_offset,$file , $width_week-$width,$file);
+    system($tmpcmd);
   }
 
 }
 
+
+# concat multiple graphs.
 $cmd = "$cmd_convert -append ";
 foreach(@files){
   $cmd .= $_ ." ";
 }
-$cmd .= " $tmpdir"."/rrdcalimg" . $local_graph_id . "-" . $date . ".png";
+$cmd .= sprintf("%s/rrdcalimg-%d-%d.png",$tmpdir,$local_graph_id,$yearmon);
+system($cmd);
 
-$check = `$cmd`;
 
-foreach(@files){
-  system("rm -f $_");
-}
+# delete temprary graphs
+foreach(@files){ system("rm -f $_"); }
+
+print "$lower_limit:$upper_limit";
 
 exit;
 
+# ---------------------------------------------------------------- #
+# Functions
+# ---------------------------------------------------------------- #
+
+
+# ----------------------#
+# -- ymd_to_unixdate -- #
+# ----------------------#
 sub check_date{
   my $year = shift;
   my $mon  = shift;
@@ -315,6 +358,9 @@ sub check_date{
 
 
 
+# -----------------------#
+# -- Calc RPN Formula -- #
+# -----------------------#
 sub plus {
   my $n2 = pop @stack;
   my $n1 = pop @stack;
