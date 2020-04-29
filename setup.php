@@ -1,16 +1,9 @@
 <?php
 
-#define('REALTIME_REALM_ID', '181');
-
-function plugin_init_rrdcalendar() {
-	global $plugin_hooks;
-
-	// This is where you hook into the plugin archetecture
-	$plugin_hooks['graph_buttons']['rrdcalendar']            = 'rrdcalendar_graph_buttons';
-	$plugin_hooks['graph_buttons_thumbnails']['rrdcalendar'] = 'rrdcalendar_graph_buttons';
-}
-
 function plugin_rrdcalendar_install() {
+        api_plugin_register_hook('rrdcalendar', 'config_arrays',         'rrdcalendar_config_arrays',        'setup.php');
+        api_plugin_register_hook('rrdcalendar', 'config_form',           'rrdcalendar_config_form',          'setup.php');
+        api_plugin_register_hook('rrdcalendar', 'config_settings',       'rrdcalendar_config_settings',      'setup.php');
 	api_plugin_register_hook('rrdcalendar', 'graph_buttons',            'rrdcalendar_graph_buttons',   "setup.php");
 	api_plugin_register_hook('rrdcalendar', 'graph_buttons_thumbnails', 'rrdcalendar_graph_buttons',   "setup.php");
 
@@ -35,10 +28,6 @@ function plugin_rrdcalendar_upgrade () {
 	return false;
 }
 
-function plugin_rrdcalendar_version () {
-	return rrdcalendar_version();
-}
-
 function rrdcalendar_check_upgrade () {
 }
 
@@ -53,6 +42,10 @@ function rrdcalendar_check_dependencies() {
 function rrdcalendar_setup_table_new () {
 }
 
+function plugin_rrdcalendar_version () {
+	return rrdcalendar_version();
+}
+
 function rrdcalendar_version () {
         global $config;
         $info = parse_ini_file($config['base_path'] . '/plugins/rrdcalendar/INFO', true);
@@ -60,16 +53,101 @@ function rrdcalendar_version () {
 }
 
 
-function rrdcalendar_config_settings () {
-	global $tabs, $settings, $rrdcalendar_refresh, $rrdcalendar_window, $rrdcalendar_sizes;
+function rrdcalendar_config_settings ($force = false) {
+	global $tabs, $settings, $rrdcalendar_start_wd, $rrdcalendar_fontsize;
 
 	/* check for an upgrade */
 	plugin_rrdcalendar_check_config();
 
+
+
+        if ($force === false && isset($_SERVER['PHP_SELF']) &&
+                basename($_SERVER['PHP_SELF']) != 'settings.php' &&
+                basename($_SERVER['PHP_SELF']) != 'auth_profile.php')
+                return;
+
+        $tabs['rrdcalendar'] = __('RRDcalendar', 'rrdcalendar');
+        #$tabs_graphs['rrdcalendar'] = __('RRDcalendar', 'rrdcalendar');
+
+        $treeList = array_rekey(get_allowed_trees(), 'id', 'name');
+        $tempHeader = array('rrdcalendar_header' => array(
+                        'friendly_name' => __('RRDcalendar Graphs', 'rrdcalendar'),
+                        'method' => 'spacer',
+                        ));
+        $temp = array(
+                'rrdcalendar_legend' => array(
+                        'friendly_name' => __('Display Legend', 'rrdcalendar'),
+                        'description' => __('Check this to display legend.', 'rrdcalendar'),
+                        'method' => 'checkbox',
+                        'default' => ''
+                        ),
+
+                'rrdcalendar_start_wd' => array(
+                        'friendly_name' => __('Start Day of Week', 'rrdcalendar'),
+                        'description' => __('Select which start to day of the week.', 'rrdcalendar'),
+                        'method' => 'drop_array',
+                        'default' => '1',
+                        'array' => $rrdcalendar_start_wd
+                        #'array' => array(0 => __('Sunday', 'rrdcalendar'), 1 => __('Monday', 'rrdcalendar') ),
+                        ),
+
+                'rrdcalendar_fontsize' => array(
+                        'friendly_name' => __('Fontsize', 'rrdcalendar'),
+                        'description' => __('Select graph scale by fontsize.', 'rrdcalendar'),
+                        'method' => 'drop_array',
+                        'default' => '10',
+                        'array' => $rrdcalendar_fontsize
+                        #'array' => array(0 => __('Sunday', 'rrdcalendar'), 1 => __('Monday', 'rrdcalendar') ),
+                        ),
+
+
+                'rrdcalendar_cheader' => array(
+                        'friendly_name' => __('Misc Options', 'rrdcalendar'),
+                        'method' => 'spacer',
+                        ),
+                'rrdcalendar_custom_graph_title' => array(
+                        'friendly_name' => __('Custom Title', 'rrdcalendar'),
+                        'description' => __('Add Original Strings for Specified Graph Title.', 'rrdcalendar'),
+                        'method' => 'textbox',
+                        'max_length' => 255,
+                        )
+        );
+
+        if (isset($settings['rrdcalendar'])) {
+                $settings['rrdcalendar'] = array_merge($settings['rrdcalendar'], $tempHeader, $temp);
+        }else {
+                $settings['rrdcalendar'] = array_merge($tempHeader, $temp);
+        }
+
+        if (isset($settings_user['rrdcalendar'])) {
+                $settings_user['rrdcalendar'] = array_merge($settings_user['rrdcalendar'], $temp);
+        }else {
+                $settings_user['rrdcalendar'] = $temp;
+        }
+
+
+
+
+
+
+
 }
 
 function rrdcalendar_config_arrays () {
-	global $user_auth_realm_filenames, $rrdcalendar_refresh, $rrdcalendar_window;
+	global $user_auth_realm_filenames, $rrdcalendar_start_wd, $rrdcalendar_fontsize;
+
+        $rrdcalendar_start_wd = array(
+                0 => __('Sunday ', 0, 'rrdcalendar'),
+                1 => __('Mondary', 1, 'rrdcalendar')
+        );
+
+        $rrdcalendar_fontsize = array(
+                 6 => __('Small  (%d pt)',  6, 'rrdcalendar'),
+                 8 => __('Medium (%d pt)',  8, 'rrdcalendar'),
+                10 => __('Large  (%d pt)', 10, 'rrdcalendar')
+        );
+
+	return true;
 }
 
 function rrdcalendar_graph_buttons($args) {
@@ -91,5 +169,15 @@ function rrdcalendar_graph_buttons($args) {
 function rrdcalendar_setup_table() {
 	global $config, $database_default;
 }
+
+// Old Plugin Archtecture ??
+function plugin_init_rrdcalendar() {
+	global $plugin_hooks;
+
+	// This is where you hook into the plugin archetecture
+	$plugin_hooks['graph_buttons']['rrdcalendar']            = 'rrdcalendar_graph_buttons';
+	$plugin_hooks['graph_buttons_thumbnails']['rrdcalendar'] = 'rrdcalendar_graph_buttons';
+}
+
 
 ?>
