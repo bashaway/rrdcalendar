@@ -13,7 +13,6 @@ $cmd_rrdtool = "/usr/bin/rrdtool ";
 $cmd_graph_png   = $cmd_rrdtool . ' graph - '." \\\n";;
 $cmd_graph_info  = $cmd_rrdtool . ' graphv '." \\\n";;
 
-$file_output = sprintf("%s/rrdcalimg-%d-%d.png",$tmpdir,$local_graph_id,$yearmon);
 
 
 chdir('../..');
@@ -34,13 +33,12 @@ $cmd_rrdtool = ob_get_clean();
 
 $graph_opt = "";
 foreach ( explode("\n",$cmd_rrdtool) as $value ){
-
+  if($value == ""){continue;}
   $value = preg_replace("/<PRE>/","",$value);
   $value = preg_replace("/&#039;/","'", $value);
   $value = preg_replace("/&quot;/","\"", $value);
   $value = preg_replace("/<\/PRE>.+/","",$value);
   $graph_opt .= $value ."\n";
-
 }
 
 
@@ -61,12 +59,12 @@ $orig_upper_limit_type = "auto";
 $orig_lower_limit_type = "auto";
 $orig_upper_limit = "";
 $orig_lower_limit = "";
-foreach ( explode("\n",$cmd_rrdtool) as $value){
-  if( preg_match("/^--upper-limit=(&#039;)*(\w+)(&#039;)*/",$value,$matches)){
+foreach ( explode("\n",$graph_opt) as $value){
+  if( preg_match("/^--upper-limit=(')*(\w+)(')*/",$value,$matches)){
     $orig_upper_limit = $matches[2];
     $orig_upper_limit_type = "fixed";
   }
-  if( preg_match("/^--lower-limit=(&#039;)*(\w+)(&#039;)*/",$value,$matches)){
+  if( preg_match("/^--lower-limit=(')*(\w+)(')*/",$value,$matches)){
     $orig_lower_limit = $matches[2];
     $orig_lower_limit_type = "fixed";
   }
@@ -80,6 +78,7 @@ $lower_limit = isset_request_var('lower_limit') ? get_request_var('lower_limit')
 
 $limits = sprintf("%s,%s,%s,%s", $upper_limit_type ,$upper_limit ,$lower_limit_type ,$lower_limit);
 
+$file_output_system = sprintf("%s/rrdcalimg-%d-%d.png",$tmpdir, get_request_var('local_graph_id'), $yearmon);
 $file_output = $cdir."/rrdcalimg-".  get_request_var('local_graph_id') ."-".$yearmon.".png";
 
 
@@ -87,12 +86,9 @@ $file_output = $cdir."/rrdcalimg-".  get_request_var('local_graph_id') ."-".$yea
 # --------------------------------------- #
 # Generate Graph by script
 # --------------------------------------- #
-$cmd_graph = "/usr/bin/perl /usr/share/cacti/plugins/rrdcalendar/rrdcalendar.pl " . get_request_var('local_graph_id') . " $yearmon  $mon_start '$limits' $fontsize  '$cmd_rrdtool' ";
-system($cmd_graph);
-$result = ob_get_clean();
-
-
-
+#$cmd_graph = "/usr/bin/perl /usr/share/cacti/plugins/rrdcalendar/rrdcalendar.pl " . get_request_var('local_graph_id') . " $yearmon  $mon_start '$limits' $fontsize  '$cmd_rrdtool' ";
+#system($cmd_graph);
+#$result = ob_get_clean();
 
 
 
@@ -102,22 +98,18 @@ $result = ob_get_clean();
 
 $year = substr($yearmon,0,4);
 $mon  = substr($yearmon,4,2);
-$mon_check = $mon;
+$days = date("t",mktime(0,0,0,$mon,1,$year));
 
-$day  = 1;
 $week = 1;
-while($mon == $mon_check){
-  list($unixtime,$mon_check,$day_check,$wday) = explode(",",date("U,m,d,w",mktime(0,0,0,$mon,$day,$year)));
+for($day=1;$day <= $days;$day++){
+  list($unixtime,$wday) = explode(",",date("U,w",mktime(0,0,0,$mon,$day,$year)));
   if($wday == $mon_start && $day != 1){
     $week++;
   }
 
-  #push(@{"week$week"},$day);
-  #array_push($unixtimes,$unixtime) ;
   ${"week$week"}[] = $day;
   $unixtimes[] = $unixtime;
 
-  $day++;
 }
 
 $weeks = $week;
@@ -126,7 +118,6 @@ $days = $day-1;
 $start_all = $unixtimes[0];
 $end_all = end($unixtimes) + 24*60*60;
 
-#$debug_buf .= "$start_all to $end_all <BR>\n";
 
 
 $cmd_graph_opts = "";
@@ -138,11 +129,14 @@ if($lower_limit_type == "fixed"){
 }
 
 foreach (explode("\n",$graph_opt) as $value) {
-  if( preg_match( "/rrdtool\ graph|^--start=|^--end=|^--width=|^--height=|^--title=|^--watermark |^--color |^--font |^--x-grid |^--alt-autoscale-max |^--upper-limit=|^--lower-limit=/",$value,$matches)){continue;}
+  if( preg_match( "/^$|rrdtool\ graph|^--start=|^--end=|^--width=|^--height=|^--title=|^--watermark |^--color |^--font |^--x-grid |^--alt-autoscale-max |^--upper-limit=|^--lower-limit=/",$value,$matches)){continue;}
 
-  if(preg_match("/\\$/",$value,$matches)){ $value .= "\\" ;}
+  if(!preg_match("/\\\\$/",$value)){
+    $value .= "\\" ;
+  }
   $cmd_graph_opts .= $value . "\n";
 }
+
 
 $height_append = $fontsize*1.9;
 $graph_height  = $fontsize*12;
@@ -169,15 +163,16 @@ $cmd_graph_opts .= '--color ARROW#FFFFFF '."\\\n";
 $cmd_graph_opts .= '--disable-rrdtool-tag '."\\\n";
 $cmd_graph_opts .= '--x-grid HOUR:6:DAY:1:DAY:1:86400:%m\/%d\(%a\) '."\\\n";
 $cmd_graph_opts .= '--step 300'." \\\n";
-$cmd_graph_opts .= '--no-legend '." \\\n";
 
-/*
+
 # ---------------------------------------------------------------- #
 # Get Graph Information
 # ---------------------------------------------------------------- #
-%graph_info = split(/\ =\ |\n/,`$cmd_graph_info $cmd_graph_opts`);
-foreach ( sort keys %graph_info ){
-  ${$_} = ${graph_info{$_}};
+
+foreach ( explode("\n",`$cmd_graph_info $cmd_graph_opts`) as $value){
+  if(preg_match("/^$/",$value)){continue;}
+  list($key,$value) = explode(" = ",$value);
+  ${$key} = $value;
 }
 
 $image_height .= $height_append;
@@ -188,132 +183,101 @@ $legend_height = $image_height - $graph_top - $graph_height - $fontsize*2;
 # ---------------------------------------------------------------- #
 # Generate Graph (month)
 # ---------------------------------------------------------------- #
-$tmpfile_month = $file_output."_month";
+$tmpfile_month = $file_output_system."_month";
 $cmd = sprintf("%s %s > %s",$cmd_graph_png,$cmd_graph_opts,$tmpfile_month);
-system($cmd);
-push(@tmpfiles,$tmpfile_month);
+$dummy = `$cmd`;
+$tmpfiles[] = $tmpfile_month;
+
+
 
 # ---------------------------------------------------------------- #
 # Generate graph axis (Y)
 # ---------------------------------------------------------------- #
-$tmpfile_y_axis = $file_output."_y_axis";
+$tmpfile_y_axis = $file_output_system."_y_axis";
 $crop_width  = $graph_left;
 $crop_height = $image_height - $legend_height;
 $crop_left   = 0;
 $crop_top    = 0;
 $cmd = sprintf("%s %s -crop %dx%d+%d+%d %s",$cmd_convert,$tmpfile_month,$crop_width,$crop_height,$crop_left,$crop_top,$tmpfile_y_axis);
-system($cmd);
-push(@tmpfiles,$tmpfile_y_axis);
+$dummy = `$cmd`;
+$tmpfiles[] = $tmpfile_y_axis;
 
 
 # ---------------------------------------------------------------- #
 # Generate graph axis (Y-2nd)
 # ---------------------------------------------------------------- #
-$tmpfile_y_axis_2nd = $file_output."_y_axis_2nd";
+$tmpfile_y_axis_2nd = $file_output_system."_y_axis_2nd";
 $crop_width  = $graph_right;
 $crop_height = $image_height - $legend_height;
 $crop_left   = $image_width-$graph_right;
 $crop_top    = 0;
 $cmd = sprintf("%s %s -crop %dx%d+%d+%d %s",$cmd_convert,$tmpfile_month,$crop_width,$crop_height,$crop_left,$crop_top,$tmpfile_y_axis_2nd);
-system($cmd);
-push(@tmpfiles,$tmpfile_y_axis_2nd);
+$dummy = `$cmd`;
+$tmpfiles[] = $tmpfile_y_axis_2nd;
 
 
 # ---------------------------------------------------------------- #
 # Generate graph legend
 # ---------------------------------------------------------------- #
-$tmpfile_legend = $file_output."_legend";
+$tmpfile_legend = $file_output_system."_legend";
 $crop_width  = $graph_right+$graph_width_day*7 + $graph_left;
 $crop_height = $legend_height;
 $crop_left   = 0;
 $crop_top    = $image_height-$legend_height;
 $cmd = sprintf("%s %s -crop %dx%d+%d+%d %s",$cmd_convert,$tmpfile_month,$crop_width,$crop_height,$crop_left,$crop_top,$tmpfile_legend);
-system($cmd);
-push(@tmpfiles,$tmpfile_legend);
+$dummy = `$cmd`;
+$tmpfiles[] = $tmpfile_legend;
 
 
 # ---------------------------------------------------------------- #
 # Extract spec range (= week) from month graph.
 # ---------------------------------------------------------------- #
-foreach $week (1..$weeks){
-  $graph_width_week =  $graph_width_day * (${"week$week"}[-1] - ${"week$week"}[0] + 1);
+
+for($week = 1; $week <= $weeks ; $week++){
+  $graph_width_week =  $graph_width_day * (end(${"week$week"}) - ${"week$week"}[0] + 1);
   $graph_left_week  =  $graph_left + $graph_width_day * (${"week$week"}[0] - 1);
-  $tmpfile = $file_output."_$week.png";
+  $tmpfile = $file_output_system."_$week.png";
 
   $crop_width  = $graph_width_week;
   $crop_height = $image_height-$legend_height;
   $crop_left   = $graph_left_week;
   $crop_top    = 0;
-  $cmd = sprintf("%s   \\(   %s -crop %dx%d+%d+%d  \\)   %s",$cmd_convert,$tmpfile_month,$crop_width,$crop_height,$crop_left,$crop_top,$tmpfile);
-  system($cmd);
+  $cmd = sprintf("%s    %s -crop %dx%d+%d+%d   %s",$cmd_convert,$tmpfile_month,$crop_width,$crop_height,$crop_left,$crop_top,$tmpfile);
+  $dummy = `$cmd`;
+
 
   $cmd = "$cmd_convert +append $tmpfile_y_axis $tmpfile $tmpfile_y_axis_2nd $tmpfile";
-  system($cmd);
+  $dummy = `$cmd`;
 
   # First week graph shifts to left.
   if($week ==1){
     $cmd = sprintf("%s -size %dx%d canvas:white %s -gravity east -composite %s ",$cmd_convert , $graph_left+$graph_width_day*7+$graph_right,$image_height-$legend_height,$tmpfile,$tmpfile);
-    system($cmd);
+    $dummy = `$cmd`;
   }
 
-  push(@files,$tmpfile);
+  $files[] = $tmpfile;
   
 }
 
-
 # concat multiple graphs.
 $cmd = "$cmd_convert -append ";
-foreach(@files){
-  $cmd .= $_ ." ";
+foreach($files as $file){
+  $cmd .= $file ." ";
 }
-$cmd .= "$tmpfile_legend $file_output";
-system($cmd);
+$cmd .= "$tmpfile_legend $file_output_system";
+$dummy = `$cmd`;
 
 # delete temprary graphs
-push(@files,@tmpfiles);
-foreach(@files){ system("rm -f $_"); }
+$delfiles = array_merge($files,$tmpfiles);
+foreach($delfiles as $file){ system("rm -f $file"); }
 
 
-
-if($upper_limit_type ne "fixed"){
-  $upper_limit = $graph_info{'value_max'};
-}
-if($lower_limit_type ne "fixed"){
-  $lower_limit = $graph_info{'value_min'};
-}
-
-
-print "$lower_limit:$upper_limit";
-
-
-if($debug_print){
-  open(FILE," > $tmpdir/out.log");
-  print FILE $debug_buf;
-  close(FILE);
-}
-
-exit;
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-list($calced_lower_limit,$calced_upper_limit) = explode(":",$result);
 if($lower_limit_type == "auto"){
-  $lower_limit = $calced_lower_limit;
+  $lower_limit = $value_min;
 }
 if($upper_limit_type == "auto"){
-  $upper_limit = $calced_upper_limit;
+  $upper_limit = $value_max;
 }
-
 
 
 ob_end_clean();
