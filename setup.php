@@ -1,9 +1,9 @@
 <?php
 
 function plugin_rrdcalendar_install() {
-        api_plugin_register_hook('rrdcalendar', 'config_arrays',         'rrdcalendar_config_arrays',        'setup.php');
-        api_plugin_register_hook('rrdcalendar', 'config_form',           'rrdcalendar_config_form',          'setup.php');
-        api_plugin_register_hook('rrdcalendar', 'config_settings',       'rrdcalendar_config_settings',      'setup.php');
+  api_plugin_register_hook('rrdcalendar', 'config_arrays',         'rrdcalendar_config_arrays',        'setup.php');
+  api_plugin_register_hook('rrdcalendar', 'config_form',           'rrdcalendar_config_form',          'setup.php');
+  api_plugin_register_hook('rrdcalendar', 'config_settings',       'rrdcalendar_config_settings',      'setup.php');
 	api_plugin_register_hook('rrdcalendar', 'graph_buttons',            'rrdcalendar_graph_buttons',   "setup.php");
 	api_plugin_register_hook('rrdcalendar', 'graph_buttons_thumbnails', 'rrdcalendar_graph_buttons',   "setup.php");
 
@@ -53,12 +53,35 @@ function rrdcalendar_version () {
 }
 
 
+function rrdcalendar_config_form ($force = false) {
+  global $tabs, $settings, $settings_user,$tabs_graphs;
+
+  plugin_rrdcalendar_check_config();
+
+  $tabs_graphs += array('rrdcalendar' => __('RRDcalendar', 'rrdcalendar'));
+
+  $settings_user += array(
+    'rrdcalendar' => array(
+      'rrdcalendar_fontsize_user' => array(
+        'friendly_name' => __('graph size', 'rrdcalendar'),
+        'description' => __('select graph size.', 'rrdcalendar'),
+        'method' => 'drop_array',
+        'default' => '8',
+        'array' => array(
+                 6 => __('Small  (%d pt)',  6, 'rrdcalendar'),
+                 8 => __('Medium (%d pt)',  8, 'rrdcalendar'),
+                10 => __('Large  (%d pt)', 10, 'rrdcalendar')
+        )
+      )
+    )
+  );
+}
+
 function rrdcalendar_config_settings ($force = false) {
 	global $config , $tabs, $settings, $rrdcalendar_start_wd, $rrdcalendar_fontsize;
 
 	/* check for an upgrade */
 	plugin_rrdcalendar_check_config();
-
 
 
         if ($force === false && isset($_SERVER['PHP_SELF']) &&
@@ -95,7 +118,7 @@ function rrdcalendar_config_settings ($force = false) {
                         'friendly_name' => __('Fontsize', 'rrdcalendar'),
                         'description' => __('Select graph scale by fontsize.', 'rrdcalendar'),
                         'method' => 'drop_array',
-                        'default' => '10',
+                        'default' => '8',
                         'array' => $rrdcalendar_fontsize
                         #'array' => array(0 => __('Sunday', 'rrdcalendar'), 1 => __('Monday', 'rrdcalendar') ),
                         ),
@@ -151,12 +174,6 @@ function rrdcalendar_config_settings ($force = false) {
         }else {
                 $settings_user['rrdcalendar'] = $temp;
         }
-
-
-
-
-
-
 
 }
 
