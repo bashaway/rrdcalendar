@@ -5,15 +5,12 @@ include_once("../../lib/rrd.php");
 include_once("./mkcalgraph.php");
 
 $debug_buf ="";
+$self = preg_replace("/.+\//","",__FILE__);
 
 
-$limits = mkcalgraph();
-foreach ( $limits as $key => $value ){
-  ${$key} = $value;
-}
-
-
-# Graph Title setting
+# ---------------------------------- #
+# Request vars 
+# ---------------------------------- #
 $yearmon = isset_request_var('yearmon') ? get_request_var('yearmon') : date("Ym");
 $year = substr($yearmon,0,4);
 $mon  = substr($yearmon,4,2);
@@ -21,13 +18,20 @@ $yearmon_prev = date("Ym",mktime(0,0,0,$mon-1,1,$year));
 $yearmon_next = date("Ym",mktime(0,0,0,$mon+1,1,$year));
 
 $graph_title = sprintf("%s %s",read_config_option('rrdcalendar_custom_graph_title'),get_graph_title(get_request_var('local_graph_id')));
-$cdir = "/cacti/plugins/rrdcalendar/images";
-$file_output = $cdir."/rrdcalimg-".  get_request_var('local_graph_id') ."-".$yearmon.".png";
-
-$self = preg_replace("/.+\//","",__FILE__);
+$file_output = "/cacti/plugins/rrdcalendar/images/rrdcalimg-".  get_request_var('local_graph_id') ."-".$yearmon.".png";
 
 $mon_start = isset_request_var('mon_start') ? get_request_var('mon_start') : read_config_option('rrdcalendar_start_wd') ;
 $fontsize  = isset_request_var('fontsize') ? get_request_var('fontsize') : read_config_option('rrdcalendar_fontsize') ;
+
+
+# ---------------------------------- #
+# Generate calendar graph
+# ---------------------------------- #
+$limits = mkcalgraph();
+foreach ( $limits as $key => $value ){
+  ${$key} = $value;
+}
+
 
 ?>
 

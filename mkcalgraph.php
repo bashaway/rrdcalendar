@@ -11,7 +11,6 @@ include_once("../../lib/rrd.php");
 
 function mkcalgraph(){
 
-$debug_buf ="";
 $path_convert = read_config_option('rrdcalendar_path_convert');
 $path_rrdtool = read_config_option('rrdcalendar_path_rrdtool');
 $path_images  = read_config_option('rrdcalendar_path_images');
