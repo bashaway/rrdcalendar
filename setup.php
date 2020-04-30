@@ -7,7 +7,7 @@ function plugin_rrdcalendar_install() {
 	api_plugin_register_hook('rrdcalendar', 'graph_buttons',            'rrdcalendar_graph_buttons',   "setup.php");
 	api_plugin_register_hook('rrdcalendar', 'graph_buttons_thumbnails', 'rrdcalendar_graph_buttons',   "setup.php");
 
-	api_plugin_register_realm('rrdcalendar', 'rrdcalendar.php', 'Plugin -> Realtime', 1);
+	api_plugin_register_realm('rrdcalendar', 'rrdcalendar.php', 'Plugin -> RRDcalendar', 1);
 
 	rrdcalendar_setup_table_new ();
 }
