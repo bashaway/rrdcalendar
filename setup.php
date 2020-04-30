@@ -54,7 +54,7 @@ function rrdcalendar_version () {
 
 
 function rrdcalendar_config_settings ($force = false) {
-	global $tabs, $settings, $rrdcalendar_start_wd, $rrdcalendar_fontsize;
+	global $config , $tabs, $settings, $rrdcalendar_start_wd, $rrdcalendar_fontsize;
 
 	/* check for an upgrade */
 	plugin_rrdcalendar_check_config();
@@ -100,6 +100,33 @@ function rrdcalendar_config_settings ($force = false) {
                         #'array' => array(0 => __('Sunday', 'rrdcalendar'), 1 => __('Monday', 'rrdcalendar') ),
                         ),
 
+                'rrdcalendar_path_setting' => array(
+                        'friendly_name' => __('Path Options', 'rrdcalendar'),
+                        'method' => 'spacer',
+                        ),
+                'rrdcalendar_path_rrdtool' => array(
+                        'friendly_name' => __('RRDTool command path', 'rrdcalendar'),
+                        'description' => __('input RRDTool command path ', 'rrdcalendar'),
+                        'method' => 'filepath',
+                        'filetype' => 'binary',
+                        'default' => '/usr/bin/rrdtool',
+                        'max_length' => 64,
+                        ),
+                'rrdcalendar_path_convert' => array(
+                        'friendly_name' => __('convert command path', 'rrdcalendar'),
+                        'description' => __('input convert (ImageMagick) command path ', 'rrdcalendar'),
+                        'method' => 'filepath',
+                        'filetype' => 'binary',
+                        'default' => '/usr/bin/convert',
+                        'max_length' => 64,
+                        ),
+                'rrdcalendar_path_images' => array(
+                        'friendly_name' => __('writable image directory ', 'rrdcalendar'),
+                        'description' => __('generate images for this directory', 'rrdcalendar'),
+                        'method' => 'dirpath',
+                        'default' => $config['base_path'] .  '/plugins/rrdcalendar/images',
+                        'max_length' => 64,
+                        ),
 
                 'rrdcalendar_cheader' => array(
                         'friendly_name' => __('Misc Options', 'rrdcalendar'),
