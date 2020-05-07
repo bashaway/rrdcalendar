@@ -85,7 +85,7 @@ foreach (explode("\n",$orig_graph_opts) as $value) {
   if( preg_match( "/^$|rrdtool\ graph|^--start=|^--end=|^--width=|^--height=|^--title=|^--watermark |^--color |^--font |^--x-grid |^--alt-autoscale-max |^--upper-limit=|^--lower-limit=/",$value,$matches)){continue;}
 
   if(!preg_match("/\\\\$/",$value)){
-    $value .= "\\" ;
+    $value .= " \\" ;
   }
   $new_graph_opts .= $value . "\n";
 }
