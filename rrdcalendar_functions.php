@@ -1,19 +1,10 @@
 <?php
-include_once("../../include/auth.php");
-include_once("../../lib/rrd.php");
 
-# require functions : 
-#  rrdtool_function_graph
-#  read_config_option
-#  get_request_var
-#  isset_request_var
-
-
-function mkcalgraph(){
+function rrdcalendar(){
 
 $path_convert = read_config_option('rrdcalendar_path_convert');
 $path_rrdtool = read_config_option('rrdcalendar_path_rrdtool');
-$path_images  = read_config_option('rrdcalendar_path_images');
+$path_cache  = read_config_option('rrdcalendar_path_cache');
 
 
 # --------------------------------------- #
@@ -46,12 +37,12 @@ $year = substr($yearmon,0,4);
 $mon  = substr($yearmon,4,2);
 $days = date("t",mktime(0,0,0,$mon,1,$year));
 
-$mon_start = isset_request_var('mon_start') ? get_request_var('mon_start') : read_config_option('rrdcalendar_start_wd') ;
-$fontsize  = isset_request_var('fontsize') ? get_request_var('fontsize') : read_config_option('rrdcalendar_fontsize') ;
+$mon_start = isset_request_var('mon_start') ? get_request_var('mon_start') : read_user_setting('rrdcalendar_start_wd') ;
+$fontsize  = isset_request_var('fontsize') ? get_request_var('fontsize') : read_user_setting('rrdcalendar_fontsize') ;
 
 
 # Filename for filesystem and web-img
-$file_output_system = sprintf("%s/rrdcalimg-%d-%d.png",$path_images, get_request_var('local_graph_id'), $yearmon);
+$file_output_system = sprintf("%s/rrdcalimg-%d-%d.png",$path_cache, get_request_var('local_graph_id'), $yearmon);
 
 
 # ---------------------------------------------------------------- #
@@ -267,7 +258,15 @@ $cmd = "$path_convert -append ";
 foreach($files as $file){
   $cmd .= $file ." ";
 }
-$cmd .= "$tmpfile_legend $file_output_system";
+
+
+if(!read_user_setting('rrdcalendar_legend')){
+  $cmd .= "$tmpfile_legend ";
+}
+
+$cmd .= " $file_output_system";
+
+
 system($cmd);
 
 # delete temprary graphs

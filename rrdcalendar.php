@@ -2,11 +2,7 @@
 
 include_once("../../include/auth.php");
 include_once("../../lib/rrd.php");
-include_once("./mkcalgraph.php");
-
-$debug_buf ="";
-$self = preg_replace("/.+\//","",__FILE__);
-
+include_once("./rrdcalendar_functions.php");
 
 # ---------------------------------- #
 # Request vars 
@@ -17,24 +13,24 @@ $mon  = substr($yearmon,4,2);
 $yearmon_prev = date("Ym",mktime(0,0,0,$mon-1,1,$year));
 $yearmon_next = date("Ym",mktime(0,0,0,$mon+1,1,$year));
 
-$graph_title = sprintf("%s %s",read_config_option('rrdcalendar_custom_graph_title'),get_graph_title(get_request_var('local_graph_id')));
-$file_output = "/cacti/plugins/rrdcalendar/images/rrdcalimg-".  get_request_var('local_graph_id') ."-".$yearmon.".png";
+$graph_title = sprintf("%s %s",read_user_setting('rrdcalendar_custom_graph_title'),get_graph_title(get_request_var('local_graph_id')));
+$graph_title = sprintf(read_user_setting('rrdcalendar_custom_graph_title'),get_graph_title(get_request_var('local_graph_id')));
+$file_output = "/cacti/plugins/rrdcalendar/cache/rrdcalimg-".  get_request_var('local_graph_id') ."-".$yearmon.".png";
 
-$mon_start = isset_request_var('mon_start') ? get_request_var('mon_start') : read_config_option('rrdcalendar_start_wd') ;
-$fontsize  = isset_request_var('fontsize') ? get_request_var('fontsize') : read_config_option('rrdcalendar_fontsize') ;
+$mon_start = isset_request_var('mon_start') ? get_request_var('mon_start') : read_user_setting('rrdcalendar_start_wd') ;
+$fontsize  = isset_request_var('fontsize') ? get_request_var('fontsize') : read_user_setting('rrdcalendar_fontsize') ;
 
 
 # ---------------------------------- #
 # Generate calendar graph
 # ---------------------------------- #
-$limits = mkcalgraph();
+$limits = rrdcalendar();
 foreach ( $limits as $key => $value ){
   ${$key} = $value;
 }
 
 
 ?>
-
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -44,12 +40,10 @@ foreach ( $limits as $key => $value ){
 </head>
 
 <body style="text-align: center; padding: 5px 0px 5px 0px; margin: 5px 0px 5px 0px;" onLoad="imageOptionsChanged('init')">
-<?php print "<!-- <PRE>$debug_buf</PRE> -->\n"; ?>
-<?php #print "<!-- <PRE>".print_r($limits)."</PRE> -->\n"; ?>
 
 <center>
 
-<form id="limits" action="./<?php print $self;?>" method="get">
+<form id="limits" action="./<?php print get_current_page();?>" method="get">
 
 <table border=1>
 <tr>
@@ -113,7 +107,7 @@ foreach ( $limits as $key => $value ){
   <input type="button" value="x2"   onclick="document.getElementById('limits').upper_limit_type[0].checked = true; document.getElementById('upper_limit').value =  0.5   *  parseFloat(document.getElementById('upper_limit').value) ; document.getElementById('limits').submit(); ">
   </td>
   <td align=center>
-  <input type="button" value="DEFAULT"  onclick="location.href='./<?php print "$self?local_graph_id=". get_request_var('local_graph_id') . "&yearmon=$yearmon";?>'">
+  <input type="button" value="DEFAULT"  onclick="location.href='./<?php print get_current_page()."?local_graph_id=". get_request_var('local_graph_id') . "&yearmon=$yearmon";?>'">
   </td>
 </tr>
 </table>
