@@ -271,6 +271,12 @@ system($cmd);
 
 # delete temprary graphs
 $delfiles = array_merge($files,$tmpfiles);
+
+# delete old graphs
+foreach( glob($path_cache."/*.png") as $file){
+  if( (date('U') - filemtime($file) ) > (24*60*60) ){ $delfiles[] = $file; }
+}
+
 foreach($delfiles as $file){ system("rm -f $file"); }
 
 $limits{'upper_limit'} = $upper_limit;
