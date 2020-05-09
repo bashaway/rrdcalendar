@@ -5,7 +5,7 @@
 
 ## Overview
 
-This plugin provides the ability to display graphs on the system in calendar format.
+This cacti plugin provides the ability to display graphs on the system in calendar format.
 
 
 ## Requirement
