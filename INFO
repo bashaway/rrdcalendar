@@ -1,7 +1,7 @@
 [info]
 name = rrdcalendar
 version = 0.5
-longname = Graph view at calendar 
+longname = display graphs in calendar format.
 author = bashaway
 email = haruca_tech@gmail.com
 homepage = https://github.com/bashaway/rrdcalendar

@@ -24,27 +24,17 @@ function plugin_rrdcalendar_upgrade () {
   return false;
 }
 
-function rrdcalendar_check_upgrade () {
-}
-
-function rrdcalendar_database_upgrade () {
-}
-
-function rrdcalendar_check_dependencies() {
-  global $plugins, $config;
-  return true;
-}
-
 function plugin_rrdcalendar_version () {
-  return rrdcalendar_version();
-}
-
-function rrdcalendar_version () {
   global $config;
   $info = parse_ini_file($config['base_path'] . '/plugins/rrdcalendar/INFO', true);
   return $info['info'];
 }
 
+
+
+function rrdcalendar_check_upgrade () {
+  return true;
+}
 
 function rrdcalendar_config_form ($force = false) {
   global $settings_user,$tabs_graphs , $rrdcalendar_start_wd, $rrdcalendar_fontsize;
