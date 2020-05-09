@@ -1,6 +1,6 @@
 # rrdcalendar
 
-![display calendar format](https://gyazo.com/778bae374fc41825733c6370d919884f/raw)
+![display calendar format graph](https://gyazo.com/778bae374fc41825733c6370d919884f/raw)
 
 
 ## Overview
