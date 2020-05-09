@@ -64,7 +64,7 @@ function rrdcalendar_config_form ($force = false) {
       'friendly_name' => __('Display Legend', 'rrdcalendar'),
       'description' => __('Check this to display legend.', 'rrdcalendar'),
       'method' => 'checkbox',
-      'default' => ''
+      'default' => 'on'
     ),
 
     'rrdcalendar_start_wd' => array(

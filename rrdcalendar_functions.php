@@ -260,7 +260,7 @@ foreach($files as $file){
 }
 
 
-if(!read_user_setting('rrdcalendar_legend')){
+if(read_user_setting('rrdcalendar_legend')){
   $cmd .= "$tmpfile_legend ";
 }
 
