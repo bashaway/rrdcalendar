@@ -183,7 +183,7 @@ function rrdcalendar_graph_buttons($args) {
     echo "<a href='#' ";
     echo "onclick=\"window.open('".$config['url_path']."plugins/rrdcalendar/rrdcalendar.php?local_graph_id=".$local_graph_id."', 'popup_".$local_graph_id;
     echo "', 'toolbar=no,menubar=no,location=no,scrollbars=no,status=no,titlebar=no,width=800,height=1100,resizable=yes')\">";
-    echo "<img src='".$config['url_path']."plugins/rrdcalendar/rrdcalendar.gif' border='0' alt='rrdcalendar' title='calendar' style='padding: 3px;'>";
+    echo "<img src='".$config['url_path']."plugins/rrdcalendar/rrdcalendar.png' border='0' alt='rrdcalendar' title='calendar' style='padding: 3px;'>";
     echo "</a><br/>";
   }
 
