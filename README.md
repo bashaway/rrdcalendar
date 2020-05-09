@@ -25,6 +25,7 @@ dnf -y install ImageMagick
 ```
 
 Install Plugins
+
 https://github.com/Cacti/documentation/blob/develop/Plugins.md
 
 
