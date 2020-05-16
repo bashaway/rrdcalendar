@@ -12,6 +12,9 @@ function plugin_rrdcalendar_install() {
 }
 
 function plugin_rrdcalendar_uninstall () {
+  // Remove items from the settings table
+  db_execute('DELETE FROM settings_user WHERE name LIKE "%rrdcalendar%"');
+  db_execute('DELETE FROM settings WHERE name LIKE "%rrdcalendar%"');
 }
 
 function plugin_rrdcalendar_check_config () {

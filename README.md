@@ -60,3 +60,4 @@ Console -> Configuration -> Users -> (select user) -> User Settings
 
 * Initial public release
 
+<!-- git add -A ; git commit -m "COMIT COMMENT" ;  git push -u origin master -->
