@@ -20,6 +20,43 @@ $file_output = "/cacti/plugins/rrdcalendar/cache/rrdcalimg-".  get_request_var('
 $mon_start = isset_request_var('mon_start') ? get_request_var('mon_start') : read_user_setting('rrdcalendar_start_wd') ;
 $fontsize  = isset_request_var('fontsize') ? get_request_var('fontsize') : read_user_setting('rrdcalendar_fontsize') ;
 
+if(!(is_writable( read_config_option('rrdcalendar_path_cache')) && is_executable( read_config_option('rrdcalendar_path_convert')))){
+?>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>Cacti - rrdcalendar</title>
+	<link href="../../include/main.css" type="text/css" rel="stylesheet">
+</head>
+
+<body style="text-align: center; padding: 5px 0px 5px 0px; margin: 5px 0px 5px 0px;" onLoad="imageOptionsChanged('init')">
+
+<center>
+<h3>require packege(ImageMagick)</h3>
+<h3> or </h3>
+<h3>cache directory(~plugins/rrdcalendar/cache) permission</h3>
+<h3>check failed.</h3>
+<BR>
+$ sudo dnf -y install ImageMagick<BR>
+$ sudo chown apache.apache ./cache<BR>
+<BR>
+see document.<BR>
+<a href=https://github.com/bashaway/rrdcalendar#installation>https://github.com/bashaway/rrdcalendar#installation</a><BR>
+or<BR>
+<a href=https://github.com/bashaway/rrdcalendar#configuration>https://github.com/bashaway/rrdcalendar#configuration</a><BR>
+
+</center>
+
+</body>
+</html>
+
+
+<?php
+
+exit;
+}
+
 
 # ---------------------------------- #
 # Generate calendar graph
