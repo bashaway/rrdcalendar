@@ -12,7 +12,7 @@ $mode      = isset_request_var('mode') ? get_request_var('mode') : "" ;
 $hostname  = isset_request_var('hostname') ? get_request_var('hostname') : "" ;
 $graphtype = isset_request_var('graphtype') ? get_request_var('graphtype') : "" ;
 
-if($mode == 'api' && $hostname != "" && $graphtype != "" ){
+if($mode == 'nagios' && $hostname != "" && $graphtype != "" ){
 
 
 $info = db_fetch_assoc("
