@@ -16,10 +16,10 @@ if($mode == 'nagios' && $hostname != "" && $graphtype != "" ){
 
 
 $info = db_fetch_assoc("
-select graph_local.id as local_graph_id ,host.description as hostname,graph_templates.name as graph_title from host_graph
- inner join host on host.id = host_graph.host_id
- inner join graph_local on graph_local.graph_template_id = host_graph.graph_template_id and graph_local.host_id = host.id
- inner join graph_templates on graph_templates.id = host_graph.graph_template_id
+select graph_local.id as local_graph_id ,host.description as hostname,graph_templates.name as graph_title 
+ from graph_local
+ inner join host on host.id = graph_local.host_id
+ inner join graph_templates on graph_templates.id = graph_local.graph_template_id
  where host.description = \"$hostname\"
  and graph_templates.name like \"%$graphtype%\"
 ")[0];
