@@ -14,8 +14,6 @@ $graphtype = isset_request_var('graphtype') ? get_request_var('graphtype') : "" 
 
 if($mode == 'api' && $hostname != "" && $graphtype != "" ){
 
-$host_id = db_fetch_assoc("SELECT id FROM host where description = \"$hostname\"")[0][id];
-$host_graph_template_id = db_fetch_assoc("SELECT id,name FROM graph_templates where name like \"%$graphtype%\"");
 
 $info = db_fetch_assoc("
 select graph_local.id as local_graph_id ,host.description as hostname,graph_templates.name as graph_title from host_graph
