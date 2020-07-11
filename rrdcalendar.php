@@ -4,6 +4,60 @@ include_once("../../include/auth.php");
 include_once("../../lib/rrd.php");
 include_once("./rrdcalendar_functions.php");
 
+
+# ---------------------------------- #
+# API MODE MODIFY
+# ---------------------------------- #
+$mode      = isset_request_var('mode') ? get_request_var('mode') : "" ;
+$hostname  = isset_request_var('hostname') ? get_request_var('hostname') : "" ;
+$graphtype = isset_request_var('graphtype') ? get_request_var('graphtype') : "" ;
+
+if($mode == 'api' && $hostname != "" && $graphtype != "" ){
+
+$host_id = db_fetch_assoc("SELECT id FROM host where description = \"$hostname\"")[0][id];
+$host_graph_template_id = db_fetch_assoc("SELECT id,name FROM graph_templates where name like \"%$graphtype%\"");
+
+$info = db_fetch_assoc("
+select graph_local.id as local_graph_id ,host.description as hostname,graph_templates.name as graph_title from host_graph
+ inner join host on host.id = host_graph.host_id
+ inner join graph_local on graph_local.graph_template_id = host_graph.graph_template_id and graph_local.host_id = host.id
+ inner join graph_templates on graph_templates.id = host_graph.graph_template_id
+ where host.description = \"$hostname\"
+ and graph_templates.name like \"%$graphtype%\"
+")[0];
+
+
+$link = "/cacti/graph.php?local_graph_id=${info['local_graph_id']}";
+
+
+?>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>Cacti - rrdcalendar</title>
+	<link href="../../include/main.css" type="text/css" rel="stylesheet">
+        <meta http-equiv="refresh" content="0;URL=<?php print $link; ?>">
+
+</head>
+
+<body style="text-align: center; padding: 5px 0px 5px 0px; margin: 5px 0px 5px 0px;" onLoad="imageOptionsChanged('init')">
+
+<center>
+<h3>nagios to cacti graph</h3>
+<?php print "<a href=${link}> ${info['hostname']} ${info['graph_title']} </a>"; ?>
+</center>
+
+</body>
+</html>
+
+
+<?php
+
+exit;
+}
+
+
 # ---------------------------------- #
 # Request vars 
 # ---------------------------------- #
@@ -19,6 +73,9 @@ $file_output = "/cacti/plugins/rrdcalendar/cache/rrdcalimg-".  get_request_var('
 
 $mon_start = isset_request_var('mon_start') ? get_request_var('mon_start') : read_user_setting('rrdcalendar_start_wd') ;
 $fontsize  = isset_request_var('fontsize') ? get_request_var('fontsize') : read_user_setting('rrdcalendar_fontsize') ;
+
+
+
 
 if(!(is_writable( read_config_option('rrdcalendar_path_cache')) && is_executable( read_config_option('rrdcalendar_path_convert')))){
 ?>
