@@ -25,8 +25,8 @@ select graph_local.id as local_graph_id ,host.description as hostname,graph_temp
 ")[0];
 
 
-$link = "/cacti/graph.php?local_graph_id=${info['local_graph_id']}";
-
+#$link = "/cacti/graph.php?local_graph_id=${info['local_graph_id']}";
+$link = "/cacti/plugins/rrdcalendar/rrdcalendar.php?local_graph_id=${info['local_graph_id']}"
 
 ?>
 
